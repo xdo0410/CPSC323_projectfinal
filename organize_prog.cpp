@@ -2,11 +2,21 @@
 #include <fstream>
 #include <string>
 #include <algorithm>
+
+#include <cctype>
+#include <algorithm>
 using namespace std;
 
 /*--------------------------PART ONE-------------------------*/
 
 /*---------------Helper Functions for Part One---------------*/
+// string trim for easy identifying a blank line.
+inline std::string trim(const std::string &s)
+{
+	auto wsfront = std::find_if_not(s.begin(), s.end(), [](int c) {return std::isspace(c); });
+	auto wsback = std::find_if_not(s.rbegin(), s.rend(), [](int c) {return std::isspace(c); }).base();
+	return (wsback <= wsfront ? std::string() : std::string(wsfront, wsback));
+}
 
 //return true if there are 2 consecutive spaces
 bool bothAreSpaces(char lhs, char rhs)
@@ -24,7 +34,8 @@ string removeComments(const string& str)
 				// Flags to indicate that comments have started or not.
 	bool comment = false;
 
-	for (int i = 0; i < n; i++)
+	//char prevChar = '\n';
+	for (int i = 0; i < n-1; i++) //(n-1) to prevent from going beyond the length of the string hence illegal memory reference.
 	{
 		// If comment is on, then check for end of it
 		if (comment == true && str[i] == '*' && str[i + 1] == ')')
@@ -44,22 +55,43 @@ string removeComments(const string& str)
 		}
 
 		// If current character is a non-comment character, append it to result string
-		else
+		else {
+			// Only write one new line to prevent a blank line condition.
+			//if (prevChar != '\n' || (prevChar == '\n' && str[i] != '\n'))
 			res += str[i];
+			//prevChar = str[i];
+		} // else
 	}
 	return res;
 }
 
-void removeExtraSpaces(string &str)
+string removeExtraSpaces(string &str)
 {
-	// remove leading blank spaces
-	size_t p = str.find_first_not_of(" \t");
-	str.erase(0, p);
-
-	// remove extra blank spaces inside the string
-	string::iterator i = unique(str.begin(), str.end(), bothAreSpaces);
-	str.erase(i, str.end());
+	int n = str.length();
+	string res;	// result string
+	for (int i = 0; i < n; i++) {
+		if (str[i] != ' ' && str[i] != '\t')
+			res += str[i];
+		else if ((str[i] == ' ' || str[i] == '\t')
+				&& (i > 0 && (str[i - 1] != ' ' && str[i - 1] != '\t' && str[i - 1] != '\n'))
+			)
+			res += str[i];
+	} // for
+	return res;
 }
+string removeBlankLines(string &str)
+{
+	int n = str.length();
+	string res;	// result string
+	for (int i = 0; i < n; i++) {
+		if (str[i] != '\n')
+			res += str[i];
+		else if (i > 0 && str[i] == '\n'  && str[i-1] != '\n')
+			res += str[i];
+	} // for
+	return res;
+}
+
 
 bool isOperand(char & a)
 {
@@ -93,7 +125,6 @@ void partOne()
 
 	string filename = "final1.txt";
 	string outFilename = "final2.txt";
-	string tempFilename = "temp.txt";
 
 	string str, tempStr1, tempStr2;
 
@@ -102,7 +133,8 @@ void partOne()
 		cout << "\nInvaild file name.\n";
 		return;
 	}
-	outfile.open(tempFilename.c_str());
+	//outfile.open(tempFilename.c_str());
+	outfile.open(outFilename.c_str());
 
 	if (infile.is_open())
 	{
@@ -114,7 +146,10 @@ void partOne()
 			tempStr1 += "\n";
 		}
 		// remove comments from tempStr1 and put the rest into tempStr2
-		tempStr2 = removeComments(tempStr1);
+		
+		tempStr2 = removeBlankLines(removeExtraSpaces(removeComments(tempStr1)));
+
+		
 		// write tempStr2 into a temporary file
 		outfile << tempStr2;
 		// close the original input file
@@ -122,26 +157,7 @@ void partOne()
 	}
 	outfile.close();
 
-	infile.open(tempFilename.c_str());
-	outfile.open(outFilename.c_str());
-	if (infile.is_open())
-	{
-		while (getline(infile, str))
-		{
-			// add spaces before and after each token
-			addSpaceToken(str);
-
-			// remove extra spaces
-			removeExtraSpaces(str);
-
-			// remove blank lines
-			if (!str.empty())
-				outfile << str << endl;
-		}
-		infile.close();
-	}
-
-	outfile.close();
+	
 }
 
 /*------------------------END PART ONE-----------------------*/
