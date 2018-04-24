@@ -27,7 +27,7 @@ string removeComments(const string& str)
 	for (int i = 0; i < n; i++)
 	{
 		// If comment is on, then check for end of it
-		if (comment == true && str[i] == '/' && str[i + 1] == '/')
+		if (comment == true && str[i] == '*' && str[i + 1] == ')')
 		{
 			comment = false;
 			i++;
@@ -37,7 +37,7 @@ string removeComments(const string& str)
 			continue;
 
 		// Check for beginning of comments and set the approproate flags
-		else if (str[i] == '/' && str[i + 1] == '/')
+		else if (str[i] == '(' && str[i + 1] == '*')
 		{
 			comment = true;
 			i++;
